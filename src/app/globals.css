@@ -149,6 +149,29 @@
   }
 }
 
+.booknook-pagination .swiper-pagination-bullet {
+  width: 7px;
+  height: 7px;
+  margin: 0 !important;
+  background: #fff;
+  opacity: 0.35;
+  transition:
+    width 0.3s ease,
+    opacity 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.booknook-pagination .swiper-pagination-bullet-active {
+  width: 24px;
+  border-radius: 999px;
+  background: var(--primary);
+  opacity: 1;
+}
+
+.booknook-swiper .swiper-slide {
+  height: auto;
+}
+
 @layer utilities {
   .text-gradient-gold {
     background-image: linear-gradient(
