@@ -21,8 +21,10 @@ export const registerSchema = z.object({
     ),
   password: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(72, "Password must be 72 characters or fewer"),
+    .min(6, "Password must be at least 6 characters")
+    .max(72, "Password must be 72 characters or fewer")
+    .regex(/[A-Z]/, "Password must include an uppercase letter")
+    .regex(/[a-z]/, "Password must include a lowercase letter"),
 });
 
 export type FieldErrors = Record<string, string>;

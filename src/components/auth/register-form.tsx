@@ -199,7 +199,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
               name="password"
               type="password"
               autoComplete="new-password"
-              placeholder="At least 8 characters"
+              placeholder="At least 6 characters, with uppercase and lowercase letters"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               aria-invalid={Boolean(fieldErrors.password)}
