@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
-import { AlertCircle, ImageIcon, Loader2, Save } from "lucide-react";
+import { AlertCircle, Loader2, Save } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BookImageField } from "@/components/books/book-image-field";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -22,9 +23,6 @@ export function EditBookForm({ book }: { book: Book }) {
     updateBookAction.bind(null, book._id),
     initialActionState,
   );
-  const [coverUrl, setCoverUrl] = useState(book.imageUrl);
-  const [previewFailed, setPreviewFailed] = useState(false);
-
   return (
     <form action={formAction} className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -92,22 +90,6 @@ export function EditBookForm({ book }: { book: Book }) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Cover image URL</Label>
-            <Input
-              id="imageUrl"
-              name="imageUrl"
-              type="url"
-              required
-              value={coverUrl}
-              onChange={(event) => {
-                setCoverUrl(event.target.value);
-                setPreviewFailed(false);
-              }}
-              className="h-11"
-            />
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="description">Short description</Label>
             <Textarea
               id="description"
@@ -120,29 +102,11 @@ export function EditBookForm({ book }: { book: Book }) {
           </div>
         </div>
 
-        <aside className="space-y-3">
-          <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            Cover preview
-          </p>
-
-          <div className="relative aspect-2/3 overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-            {coverUrl && !previewFailed ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverUrl}
-                alt={`Cover of ${book.title}`}
-                className="size-full object-cover"
-                onError={() => setPreviewFailed(true)}
-              />
-            ) : (
-              <div className="flex size-full flex-col items-center justify-center gap-2 px-6 text-center text-muted-foreground">
-                <ImageIcon className="size-8" />
-                <p className="text-xs">
-                  That image could not be loaded. Double-check the URL.
-                </p>
-              </div>
-            )}
-          </div>
+        <aside>
+          <BookImageField
+            initialUrl={book.imageUrl}
+            imageAlt={`Cover of ${book.title}`}
+          />
         </aside>
       </div>
 
