@@ -12,6 +12,13 @@ export const registerSchema = z.object({
     .min(2, "Name must be at least 2 characters")
     .max(64, "Name must be 64 characters or fewer"),
   email: z.email("Enter a valid email address").max(255),
+  photoUrl: z
+    .string()
+    .trim()
+    .refine(
+      (value) => value === "" || z.url().safeParse(value).success,
+      "Enter a valid photo URL",
+    ),
   password: z
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -47,6 +54,7 @@ export function validateLogin(values: {
 export function validateRegister(values: {
   name: string;
   email: string;
+  photoUrl: string;
   password: string;
 }): { data?: z.infer<typeof registerSchema>; errors: FieldErrors } {
   const result = registerSchema.safeParse(values);

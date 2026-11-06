@@ -3,10 +3,27 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Loader2, LogIn, LogOut, Menu, UserPlus } from "lucide-react";
+import {
+  Loader2,
+  LogIn,
+  LogOut,
+  Menu,
+  UserCircle,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sheet,
   SheetClose,
@@ -100,28 +117,60 @@ export function NavbarContent({
           <ThemeToggle />
 
           {isLoggedIn && user ? (
-            <div className="hidden items-center gap-2 sm:flex">
-              <span
-                className="flex size-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-semibold text-primary"
-                title={user.name}
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    aria-label="Open account menu"
+                  />
+                }
               >
-                {initialsFor(user.name)}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-9 gap-1.5 px-2.5 text-muted-foreground hover:text-foreground"
-                onClick={handleSignOut}
-                disabled={isSigningOut}
-              >
-                {isSigningOut ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <LogOut className="size-4" />
-                )}
-                Sign out
-              </Button>
-            </div>
+                <Avatar>
+                  <AvatarImage
+                    src={user.image ?? undefined}
+                    alt={`${user.name} profile`}
+                  />
+                  <AvatarFallback className="bg-primary/15 font-display font-semibold text-primary">
+                    {initialsFor(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="px-2 py-1.5">
+                    <span className="block truncate font-medium text-foreground">
+                      {user.name}
+                    </span>
+                    <span className="block truncate font-normal text-muted-foreground">
+                      {user.email}
+                    </span>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  render={<Link href="/profile" />}
+                  className="cursor-pointer gap-2 px-2 py-2"
+                >
+                  <UserCircle className="size-4" />
+                  My Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => void handleSignOut()}
+                  disabled={isSigningOut}
+                  className="cursor-pointer gap-2 px-2 py-2 text-destructive focus:text-destructive"
+                >
+                  {isSigningOut ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <LogOut className="size-4" />
+                  )}
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
             <>
               <Button
@@ -198,10 +247,39 @@ export function NavbarContent({
               <div className="mt-auto flex flex-col gap-2 border-t border-border/60 p-4">
                 {isLoggedIn && user ? (
                   <>
-                    <p className="px-1 text-sm text-muted-foreground">
-                      Signed in as{" "}
-                      <span className="text-foreground">{user.name}</span>
-                    </p>
+                    <div className="flex items-center gap-3 px-1 pb-2">
+                      <Avatar>
+                        <AvatarImage
+                          src={user.image ?? undefined}
+                          alt={`${user.name} profile`}
+                        />
+                        <AvatarFallback className="bg-primary/15 font-display font-semibold text-primary">
+                          {initialsFor(user.name)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">
+                          {user.name}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {user.email}
+                        </p>
+                      </div>
+                    </div>
+                    <SheetClose
+                      nativeButton={false}
+                      render={
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start gap-2"
+                          nativeButton={false}
+                          render={<Link href="/profile" />}
+                        />
+                      }
+                    >
+                      <UserCircle className="size-4" />
+                      My Profile
+                    </SheetClose>
                     <Button
                       variant="outline"
                       className="w-full gap-2"
@@ -213,7 +291,7 @@ export function NavbarContent({
                       ) : (
                         <LogOut className="size-4" />
                       )}
-                      Sign out
+                      Logout
                     </Button>
                   </>
                 ) : (

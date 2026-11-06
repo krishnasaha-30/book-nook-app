@@ -26,6 +26,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [photoUrl, setPhotoUrl] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -40,7 +41,12 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
     event.preventDefault();
     setFormError(null);
 
-    const { data, errors } = validateRegister({ name, email, password });
+    const { data, errors } = validateRegister({
+      name,
+      email,
+      photoUrl,
+      password,
+    });
     const nextErrors: FieldErrors = { ...errors };
 
     if (data && password !== confirmPassword) {
@@ -59,6 +65,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         name: data.name,
         email: data.email,
         password: data.password,
+        image: data.photoUrl || undefined,
       });
 
       if (result.error) {
@@ -165,6 +172,23 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
             />
             {fieldErrors.email ? (
               <FieldError>{fieldErrors.email}</FieldError>
+            ) : null}
+          </Field>
+
+          <Field data-invalid={fieldErrors.photoUrl ? "true" : undefined}>
+            <FieldLabel htmlFor="register-photo-url">Photo URL</FieldLabel>
+            <Input
+              id="register-photo-url"
+              name="photoUrl"
+              type="url"
+              autoComplete="url"
+              placeholder="https://example.com/your-photo.jpg"
+              value={photoUrl}
+              onChange={(event) => setPhotoUrl(event.target.value)}
+              aria-invalid={Boolean(fieldErrors.photoUrl)}
+            />
+            {fieldErrors.photoUrl ? (
+              <FieldError>{fieldErrors.photoUrl}</FieldError>
             ) : null}
           </Field>
 
