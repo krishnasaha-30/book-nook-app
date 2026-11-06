@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import Link from "next/link";
-import { AlertCircle, BookPlus, ImageIcon, Loader2 } from "lucide-react";
+import { AlertCircle, BookPlus, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BookImageField } from "@/components/books/book-image-field";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -21,9 +22,6 @@ export function AddBookForm() {
     createBookAction,
     initialActionState,
   );
-  const [coverUrl, setCoverUrl] = useState("");
-  const [previewFailed, setPreviewFailed] = useState(false);
-
   return (
     <form action={formAction} className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -86,23 +84,6 @@ export function AddBookForm() {
                 className="h-11"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="imageUrl">Cover image URL</Label>
-              <Input
-                id="imageUrl"
-                name="imageUrl"
-                type="url"
-                placeholder="https://covers.openlibrary.org/..."
-                required
-                value={coverUrl}
-                onChange={(event) => {
-                  setCoverUrl(event.target.value);
-                  setPreviewFailed(false);
-                }}
-                className="h-11"
-              />
-            </div>
           </div>
 
           <div className="space-y-2">
@@ -121,40 +102,8 @@ export function AddBookForm() {
           </div>
         </div>
 
-        <aside className="space-y-3">
-          <p className="text-xs font-medium tracking-[0.2em] text-muted-foreground uppercase">
-            Cover preview
-          </p>
-
-          <div className="relative aspect-2/3 overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
-            {coverUrl && !previewFailed ? (
-              // Arbitrary cover hosts are allowed, so this bypasses the
-              // next/image domain allowlist.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={coverUrl}
-                alt="Cover preview"
-                className="size-full object-cover"
-                onError={() => setPreviewFailed(true)}
-              />
-            ) : (
-              <div className="flex size-full flex-col items-center justify-center gap-2 px-6 text-center text-muted-foreground">
-                <ImageIcon className="size-8" />
-                <p className="text-xs">
-                  {previewFailed
-                    ? "That image could not be loaded. Double-check the URL."
-                    : "Paste a cover URL to preview it here."}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Open Library covers work well:{" "}
-            <span className="text-foreground">
-              covers.openlibrary.org/b/isbn/…
-            </span>
-          </p>
+        <aside>
+          <BookImageField />
         </aside>
       </div>
 
