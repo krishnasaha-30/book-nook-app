@@ -25,8 +25,7 @@ function isActivePath(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function Navbar() {
-  const pathname = usePathname();
+function NavbarContent({ pathname }: { pathname: string | null }) {
   const visibleLinks = navLinks.filter(
     (link) => !("private" in link) || !link.private || isLoggedIn,
   );
@@ -41,7 +40,8 @@ export function Navbar() {
           className="hidden items-center gap-1 lg:flex"
         >
           {visibleLinks.map((link) => {
-            const active = isActivePath(pathname, link.href);
+            const active =
+              pathname !== null && isActivePath(pathname, link.href);
 
             return (
               <Link
@@ -126,7 +126,8 @@ export function Navbar() {
                         href={link.href}
                         className={cn(
                           "rounded-lg px-3 py-2.5 text-sm transition-colors",
-                          isActivePath(pathname, link.href)
+                          pathname !== null &&
+                            isActivePath(pathname, link.href)
                             ? "bg-accent text-primary"
                             : "text-muted-foreground hover:bg-accent hover:text-foreground",
                         )}
@@ -175,4 +176,18 @@ export function Navbar() {
       </div>
     </header>
   );
+}
+
+export function Navbar() {
+  const pathname = usePathname();
+
+  return <NavbarContent pathname={pathname} />;
+}
+
+/**
+ * Static version for the prerendered shell. It shows the same header without
+ * active-route highlighting until the live navbar streams in.
+ */
+export function NavbarFallback() {
+  return <NavbarContent pathname={null} />;
 }

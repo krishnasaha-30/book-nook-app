@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
-import { Navbar } from "@/components/navbar";
+import { Navbar, NavbarFallback } from "@/components/navbar";
 import { site } from "@/lib/site";
 
 const inter = Inter({
@@ -34,13 +35,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
+      data-scroll-behavior="smooth"
       className={`dark ${inter.variable} ${fraunces.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="flex min-h-full flex-col">
-        <Navbar />
+        <Suspense fallback={<NavbarFallback />}>
+          <Navbar />
+        </Suspense>
         <main className="flex flex-1 flex-col">{children}</main>
         <Footer />
       </body>
