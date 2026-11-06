@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Loader2, UserRound } from "lucide-react";
+import { Check, ImagePlus, Loader2, UserRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,8 +13,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/toast";
-import { authClient } from "@/lib/auth-client";
 import type { SessionUser } from "@/lib/session";
+
+const MAX_PHOTO_SIZE = 4 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function initialsFor(name: string) {
   return (
@@ -27,49 +29,70 @@ function initialsFor(name: string) {
   );
 }
 
-function isValidPhotoUrl(value: string) {
-  if (!value) {
-    return true;
-  }
-
-  try {
-    const url = new URL(value);
-    return url.protocol === "http:" || url.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
-
 export function ProfileForm({ user }: { user: SessionUser }) {
   const router = useRouter();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(user.name);
   const [photoUrl, setPhotoUrl] = useState(user.image ?? "");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [nameError, setNameError] = useState<string | null>(null);
-  const [photoUrlError, setPhotoUrlError] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  useEffect(
+    () => () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    },
+    [photoPreview],
+  );
+
+  function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setPhotoError(null);
+
+    if (
+      file &&
+      (!ALLOWED_PHOTO_TYPES.has(file.type) || file.size > MAX_PHOTO_SIZE)
+    ) {
+      setPhotoError("Choose a JPG, PNG, or WebP image smaller than 4 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(file ? URL.createObjectURL(file) : null);
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setNameError(null);
-    setPhotoUrlError(null);
+    setPhotoError(null);
     setFormError(null);
 
     const nextName = name.trim();
-    const nextPhotoUrl = photoUrl.trim();
 
     if (nextName.length < 2 || nextName.length > 64) {
       setNameError("Name must be between 2 and 64 characters.");
     }
 
-    if (!isValidPhotoUrl(nextPhotoUrl)) {
-      setPhotoUrlError("Enter a valid HTTP or HTTPS photo URL.");
+    if (
+      photoFile &&
+      (!ALLOWED_PHOTO_TYPES.has(photoFile.type) ||
+        photoFile.size > MAX_PHOTO_SIZE)
+    ) {
+      setPhotoError("Choose a JPG, PNG, or WebP image smaller than 4 MB.");
     }
 
     if (
       nextName.length < 2 ||
       nextName.length > 64 ||
-      !isValidPhotoUrl(nextPhotoUrl)
+      (photoFile &&
+        (!ALLOWED_PHOTO_TYPES.has(photoFile.type) ||
+          photoFile.size > MAX_PHOTO_SIZE))
     ) {
       return;
     }
@@ -77,26 +100,46 @@ export function ProfileForm({ user }: { user: SessionUser }) {
     setSaving(true);
 
     try {
-      const result = await authClient.updateUser({
-        name: nextName,
-        image: nextPhotoUrl || null,
-      });
+      const profileForm = new FormData();
+      profileForm.set("name", nextName);
+      if (photoFile) {
+        profileForm.set("photo", photoFile);
+      }
 
-      if (result.error) {
-        setFormError(result.error.message || "Could not update your profile.");
+      const response = await fetch("/api/profile/photo", {
+        method: "POST",
+        body: profileForm,
+      });
+      const result = (await response.json()) as {
+        imageUrl?: string;
+        error?: string;
+      };
+
+      if (!response.ok) {
+        setFormError(result.error || "Could not update your profile.");
         return;
       }
 
+      const nextPhotoUrl = result.imageUrl ?? photoUrl;
       setName(nextName);
       setPhotoUrl(nextPhotoUrl);
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      if (photoInputRef.current) {
+        photoInputRef.current.value = "";
+      }
       toast.add({
         title: "Profile updated",
         description: "Your BookNook profile changes have been saved.",
         type: "success",
       });
       router.refresh();
-    } catch {
-      setFormError("Could not update your profile. Please try again.");
+    } catch (error) {
+      setFormError(
+        error instanceof Error
+          ? `Could not update your profile: ${error.message}`
+          : "Could not update your profile. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -106,7 +149,10 @@ export function ProfileForm({ user }: { user: SessionUser }) {
     <div className="rounded-3xl border border-border/70 bg-card/60 p-6 shadow-sm sm:p-8">
       <div className="flex flex-col items-center gap-4 border-b border-border/70 pb-7 text-center sm:flex-row sm:text-left">
         <Avatar size="lg" className="size-20">
-          <AvatarImage src={photoUrl || undefined} alt={`${name} profile`} />
+          <AvatarImage
+            src={photoPreview ?? photoUrl ?? undefined}
+            alt={`${name} profile`}
+          />
           <AvatarFallback className="font-display text-xl font-semibold text-primary">
             {initialsFor(name)}
           </AvatarFallback>
@@ -152,19 +198,26 @@ export function ProfileForm({ user }: { user: SessionUser }) {
             </p>
           </Field>
 
-          <Field data-invalid={photoUrlError ? "true" : undefined}>
-            <FieldLabel htmlFor="profile-photo-url">Photo URL</FieldLabel>
+          <Field data-invalid={photoError ? "true" : undefined}>
+            <FieldLabel htmlFor="profile-photo">Profile photo</FieldLabel>
             <Input
-              id="profile-photo-url"
-              name="photoUrl"
-              type="url"
-              autoComplete="url"
-              placeholder="https://example.com/your-photo.jpg"
-              value={photoUrl}
-              onChange={(event) => setPhotoUrl(event.target.value)}
-              aria-invalid={Boolean(photoUrlError)}
+              ref={photoInputRef}
+              id="profile-photo"
+              name="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              aria-invalid={Boolean(photoError)}
             />
-            {photoUrlError ? <FieldError>{photoUrlError}</FieldError> : null}
+            <p className="text-xs text-muted-foreground">
+              JPG, PNG, or WebP. Maximum file size: 4 MB.
+            </p>
+            {photoFile ? (
+              <p className="text-xs text-muted-foreground">
+                Selected: {photoFile.name}
+              </p>
+            ) : null}
+            {photoError ? <FieldError>{photoError}</FieldError> : null}
           </Field>
 
           {formError ? (
@@ -180,10 +233,16 @@ export function ProfileForm({ user }: { user: SessionUser }) {
             <Button type="submit" className="gap-2" disabled={saving}>
               {saving ? (
                 <Loader2 className="size-4 animate-spin" />
+              ) : photoFile ? (
+                <ImagePlus className="size-4" />
               ) : (
                 <Check className="size-4" />
               )}
-              {saving ? "Saving profile…" : "Save changes"}
+              {saving
+                ? photoFile
+                  ? "Uploading and saving…"
+                  : "Saving profile…"
+                : "Save changes"}
             </Button>
           </div>
         </FieldGroup>
