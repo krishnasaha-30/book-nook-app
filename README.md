@@ -1,53 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BookNook
 
-## Getting Started
+BookNook is a small online library where readers can share books, borrow an
+available copy for seven days, and return it to the community shelf.
 
-First, run the development server:
+**Live site:** `https://YOUR-DEPLOYED-BOOKNOOK-URL.vercel.app`
+Replace this placeholder with the public URL after deploying the client.
+
+## Features
+
+- Browse, search, filter, and sort the shared book collection.
+- See the newest additions and book availability before borrowing.
+- Create an account with email and password or sign in with Google.
+- Add and edit books, upload cover images to ImgBB, and remove your own books.
+- Borrow available copies for seven days and return them from your account.
+- Track active copies so books cannot be over-borrowed or borrowed twice by
+  the same reader at once.
+- Use a responsive interface with light and dark themes.
+
+## Project repositories
+
+- Client: this Next.js repository.
+- API: the separate `book-nook-server` Express and MongoDB repository.
+
+## Run locally
+
+Start the API first. In the backend repository, copy `.env.example` to `.env`,
+fill in `MONGODB_URI`, and run:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+In this repository, copy `.env.example` to `.env.local`, configure the values
+below, and run:
 
-## Google sign-in
+```bash
+npm install
+npm run dev
+```
 
-Google sign-in is available on the login and registration pages after configuring
-OAuth credentials:
+The client runs at `http://localhost:3000`; the API runs at
+`http://localhost:8000`.
 
-1. In Google Cloud Console, create an OAuth client ID for a **Web application**.
-2. Add `http://localhost:3000` as an authorized JavaScript origin.
-3. Add `http://localhost:3000/api/auth/callback/google` as an authorized redirect URI.
-4. Copy `.env.example` to `.env.local` and set `GOOGLE_CLIENT_ID` and
-   `GOOGLE_CLIENT_SECRET`. Keep the credentials private.
-5. Set `BETTER_AUTH_URL` to the app's origin and restart the dev server.
+### Client environment
 
-For production, add the deployed app origin and its matching
-`/api/auth/callback/google` URL in Google Cloud Console, then set the production
-`BETTER_AUTH_URL` and OAuth credentials in the hosting provider's environment.
-The Google button stays hidden when either credential is missing.
+- `NEXT_PUBLIC_API_URL` — Express API origin.
+- `MONGODB_URI` — MongoDB connection string used by Better Auth and profiles.
+- `BETTER_AUTH_URL` and `BETTER_AUTH_SECRET` — Better Auth public URL and
+  secret.
+- `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` — optional Google OAuth
+  credentials.
+- `IMGBB_API_KEY` — server-only key for book cover uploads.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Set `CLIENT_URL` and `BETTER_AUTH_URL` in the API environment to the client
+origin. For production, configure the deployed client and API URLs in both
+hosting providers, and add the production Google OAuth callback URL:
+`https://YOUR-CLIENT-DOMAIN/api/auth/callback/google`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Profile photo uploads accept JPG, PNG, and WebP files up to 4 MB and are stored
+in the configured MongoDB database. Book covers are uploaded to ImgBB.
 
-## Learn More
+## Deploy
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deploy the client to Vercel and the API to Vercel or Render. Configure the
+environment variables above in each hosting provider before publishing. Replace
+the live-site placeholder at the top of this README with the deployed client
+URL.
