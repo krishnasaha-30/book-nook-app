@@ -1,8 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LogIn, Menu, UserPlus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Loader2, LogIn, LogOut, Menu, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -16,19 +17,51 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { navLinks } from "@/lib/site";
+import { signOut } from "@/lib/auth-client";
+import type { SessionUser } from "@/lib/session";
 import { cn } from "@/lib/utils";
-
-// Replaced with the BetterAuth session in the authentication step.
-const isLoggedIn: boolean = false;
 
 function isActivePath(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-function NavbarContent({ pathname }: { pathname: string | null }) {
+function initialsFor(name: string) {
+  return (
+    name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((word) => word[0]?.toUpperCase())
+      .join("") || "BN"
+  );
+}
+
+export function NavbarContent({
+  pathname,
+  session,
+}: {
+  pathname: string | null;
+  session: SessionUser | null;
+}) {
+  const router = useRouter();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const user = session;
+  const isLoggedIn = Boolean(user);
+
   const visibleLinks = navLinks.filter(
     (link) => !("private" in link) || !link.private || isLoggedIn,
   );
+
+  async function handleSignOut() {
+    setIsSigningOut(true);
+
+    try {
+      await signOut();
+      router.refresh();
+    } finally {
+      setIsSigningOut(false);
+    }
+  }
 
   return (
     <header className="glass-panel sticky top-0 z-50 border-b border-border/70">
@@ -66,7 +99,30 @@ function NavbarContent({ pathname }: { pathname: string | null }) {
         <div className="flex items-center gap-1.5">
           <ThemeToggle />
 
-          {isLoggedIn ? null : (
+          {isLoggedIn && user ? (
+            <div className="hidden items-center gap-2 sm:flex">
+              <span
+                className="flex size-9 items-center justify-center rounded-full bg-primary/15 font-display text-sm font-semibold text-primary"
+                title={user.name}
+              >
+                {initialsFor(user.name)}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 gap-1.5 px-2.5 text-muted-foreground hover:text-foreground"
+                onClick={handleSignOut}
+                disabled={isSigningOut}
+              >
+                {isSigningOut ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
+                Sign out
+              </Button>
+            </div>
+          ) : (
             <>
               <Button
                 variant="ghost"
@@ -139,37 +195,59 @@ function NavbarContent({ pathname }: { pathname: string | null }) {
                 ))}
               </nav>
 
-              {isLoggedIn ? null : (
-                <div className="mt-auto flex flex-col gap-2 border-t border-border/60 p-4">
-                  <SheetClose
-                    nativeButton={false}
-                    render={
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        nativeButton={false}
-                        render={<Link href="/login" />}
-                      />
-                    }
-                  >
-                    <LogIn className="size-4" />
-                    Login
-                  </SheetClose>
-                  <SheetClose
-                    nativeButton={false}
-                    render={
-                      <Button
-                        className="w-full"
-                        nativeButton={false}
-                        render={<Link href="/register" />}
-                      />
-                    }
-                  >
-                    <UserPlus className="size-4" />
-                    Register
-                  </SheetClose>
-                </div>
-              )}
+              <div className="mt-auto flex flex-col gap-2 border-t border-border/60 p-4">
+                {isLoggedIn && user ? (
+                  <>
+                    <p className="px-1 text-sm text-muted-foreground">
+                      Signed in as{" "}
+                      <span className="text-foreground">{user.name}</span>
+                    </p>
+                    <Button
+                      variant="outline"
+                      className="w-full gap-2"
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                    >
+                      {isSigningOut ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <LogOut className="size-4" />
+                      )}
+                      Sign out
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <SheetClose
+                      nativeButton={false}
+                      render={
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          nativeButton={false}
+                          render={<Link href="/login" />}
+                        />
+                      }
+                    >
+                      <LogIn className="size-4" />
+                      Login
+                    </SheetClose>
+                    <SheetClose
+                      nativeButton={false}
+                      render={
+                        <Button
+                          className="w-full"
+                          nativeButton={false}
+                          render={<Link href="/register" />}
+                        />
+                      }
+                    >
+                      <UserPlus className="size-4" />
+                      Register
+                    </SheetClose>
+                  </>
+                )}
+              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -178,16 +256,20 @@ function NavbarContent({ pathname }: { pathname: string | null }) {
   );
 }
 
-export function Navbar() {
-  const pathname = usePathname();
-
-  return <NavbarContent pathname={pathname} />;
-}
-
 /**
  * Static version for the prerendered shell. It shows the same header without
  * active-route highlighting until the live navbar streams in.
  */
 export function NavbarFallback() {
-  return <NavbarContent pathname={null} />;
+  return <NavbarContent pathname={null} session={null} />;
+}
+
+/**
+ * Live navbar: resolves the current route on the client; the session comes
+ * from the server via `<AppNavbar />` inside the layout's Suspense boundary.
+ */
+export function Navbar({ session }: { session: SessionUser | null }) {
+  const pathname = usePathname();
+
+  return <NavbarContent pathname={pathname} session={session} />;
 }

@@ -5,11 +5,11 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   images: {
+    // Readers can paste a cover from any host, so the shelf accepts any
+    // http(s) image instead of a fixed allowlist.
     remotePatterns: [
-      { protocol: "https", hostname: "covers.openlibrary.org" },
-      { protocol: "https", hostname: "i.ibb.co" },
-      { protocol: "https", hostname: "ibb.co" },
-      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "**" },
+      { protocol: "http", hostname: "**" },
     ],
   },
   turbopack: {

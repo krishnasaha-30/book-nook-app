@@ -3,7 +3,9 @@ import { Suspense } from "react";
 import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
 import { Footer } from "@/components/footer";
-import { Navbar, NavbarFallback } from "@/components/navbar";
+import { NavbarFallback } from "@/components/navbar";
+import { AppNavbar } from "@/components/app-navbar";
+import { Toaster } from "@/components/ui/toast";
 import { site } from "@/lib/site";
 
 const inter = Inter({
@@ -43,10 +45,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="flex min-h-full flex-col">
         <Suspense fallback={<NavbarFallback />}>
-          <Navbar />
+          <AppNavbar />
         </Suspense>
         <main className="flex flex-1 flex-col">{children}</main>
         <Footer />
+        <Toaster />
       </body>
     </html>
   );

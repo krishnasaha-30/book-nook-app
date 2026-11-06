@@ -4,7 +4,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
-  BookOpenCheck,
   CalendarDays,
   CheckCircle2,
   Library,
@@ -12,6 +11,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { BookCard } from "@/components/books/book-card";
+import { BorrowButton } from "@/components/books/borrow-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getBookById, getBooks } from "@/lib/api";
@@ -193,29 +193,7 @@ export default async function BookDetailsPage({ params }: BookDetailsProps) {
           </div>
 
           <div className="mt-8">
-            {isAvailable ? (
-              // Swapped for the borrow dialog once authentication is in place.
-              <Button
-                size="lg"
-                className="h-12 gap-2 px-7 text-sm"
-                nativeButton={false}
-                render={<Link href={`/login?redirect=/books/${book._id}`} />}
-              >
-                <BookOpenCheck className="size-4" />
-                Borrow this book
-              </Button>
-            ) : (
-              <Button size="lg" className="h-12 gap-2 px-7 text-sm" disabled>
-                <BookOpenCheck className="size-4" />
-                All copies are out
-              </Button>
-            )}
-
-            <p className="mt-3 text-xs text-muted-foreground">
-              {isAvailable
-                ? "Sign in to borrow. The book returns to the shelf automatically after seven days."
-                : "Check back soon — a copy will appear here as soon as another reader returns it."}
-            </p>
+            <BorrowButton bookId={book._id} isAvailable={isAvailable} />
           </div>
         </div>
       </section>
