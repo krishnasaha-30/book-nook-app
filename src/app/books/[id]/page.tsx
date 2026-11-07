@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -16,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getBookById, getBooks } from "@/lib/api";
 import { isBookCategory } from "@/lib/books";
+import { getCurrentUser } from "@/lib/session";
+import BookDetailsLoading from "./loading";
 
 type BookDetailsProps = {
   params: Promise<{ id: string }>;
@@ -24,6 +27,12 @@ type BookDetailsProps = {
 export async function generateMetadata({
   params,
 }: BookDetailsProps): Promise<Metadata> {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    return { title: "Book details" };
+  }
+
   const { id } = await params;
   const book = await getBookById(id);
 
@@ -53,8 +62,14 @@ async function getRelatedBooks(bookId: string, category: string) {
   return latest.filter((book) => book._id !== bookId).slice(0, 3);
 }
 
-export default async function BookDetailsPage({ params }: BookDetailsProps) {
+async function BookDetailsContent({ params }: BookDetailsProps) {
   const { id } = await params;
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect(`/login?redirect=${encodeURIComponent(`/books/${id}`)}`);
+  }
+
   const book = await getBookById(id);
 
   if (!book) {
@@ -230,5 +245,13 @@ export default async function BookDetailsPage({ params }: BookDetailsProps) {
         </section>
       ) : null}
     </div>
+  );
+}
+
+export default function BookDetailsPage({ params }: BookDetailsProps) {
+  return (
+    <Suspense fallback={<BookDetailsLoading />}>
+      <BookDetailsContent params={params} />
+    </Suspense>
   );
 }
