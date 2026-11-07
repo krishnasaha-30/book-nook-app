@@ -2,8 +2,10 @@
 
 import { useSyncExternalStore } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
+  BookOpen,
   ChevronLeft,
   ChevronRight,
   Sparkles,
@@ -17,9 +19,6 @@ type Cover = {
   title: string;
   author: string;
   category: string;
-  cover: string;
-  accent: string;
-  lift?: string;
 };
 
 type Slide = {
@@ -27,9 +26,13 @@ type Slide = {
   title: string;
   text: string;
   footnote: string;
-  theme: string;
+  image: string;
+  imageAlt: string;
   covers: Cover[];
 };
+
+const libraryBackground =
+  "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=2000&q=85";
 
 const slides: Slide[] = [
   {
@@ -37,29 +40,24 @@ const slides: Slide[] = [
     title: "A shelf that belongs to everyone.",
     text: "Add the books you love, borrow what you are curious about, and return them when you are done. The collection grows every time a reader shares.",
     footnote: "Browse the full shelf — no account needed.",
-    theme: "from-[#123c31] via-[#0e2a23] to-[#091713]",
+    image:
+      "https://images.unsplash.com/photo-1507842217343-583bb7270b66?auto=format&fit=crop&w=1200&q=85",
+    imageAlt: "Shelves lined with books in a welcoming library",
     covers: [
       {
         title: "The Night Circus",
         author: "Erin Morgenstern",
         category: "Fiction",
-        cover: "from-[#1d3f36] via-[#142b25] to-[#0b1713]",
-        accent: "text-[#e6cd93]",
       },
       {
         title: "Cosmos",
         author: "Carl Sagan",
         category: "Science",
-        cover: "from-[#2c2449] via-[#1b1631] to-[#0d0a1a]",
-        accent: "text-[#cbb8ff]",
-        lift: "-translate-y-4",
       },
       {
         title: "Sapiens",
         author: "Yuval Noah Harari",
         category: "History",
-        cover: "from-[#4c2b2b] via-[#301b1b] to-[#180d0d]",
-        accent: "text-[#f2cba9]",
       },
     ],
   },
@@ -68,29 +66,24 @@ const slides: Slide[] = [
     title: "Seven days. Zero late fees.",
     text: "Every borrow lasts a week. Return the book when you finish, or keep it until the due date — there is no fine print and no rush.",
     footnote: "Track every due date from My Borrows.",
-    theme: "from-[#2c2550] via-[#1d1838] to-[#0e0b1d]",
+    image:
+      "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=1200&q=85",
+    imageAlt: "A quiet library filled with rows of books",
     covers: [
       {
         title: "Dune",
         author: "Frank Herbert",
         category: "Science",
-        cover: "from-[#5a3a1d] via-[#382410] to-[#1b1107]",
-        accent: "text-[#f4d29a]",
       },
       {
         title: "Educated",
         author: "Tara Westover",
         category: "History",
-        cover: "from-[#1f3b52] via-[#142a3b] to-[#0a1620]",
-        accent: "text-[#c5e3f7]",
-        lift: "-translate-y-4",
       },
       {
         title: "The Hobbit",
         author: "J. R. R. Tolkien",
         category: "Fiction",
-        cover: "from-[#3d4a20] via-[#273016] to-[#141a0a]",
-        accent: "text-[#dbe8a8]",
       },
     ],
   },
@@ -99,29 +92,24 @@ const slides: Slide[] = [
     title: "Find your next quiet obsession.",
     text: "From midnight mysteries to big ideas and small adventures, the shelf changes as readers add to it. There is always one more book waiting.",
     footnote: "New arrivals land on the home page every week.",
-    theme: "from-[#4a262b] via-[#2f181c] to-[#170b0e]",
+    image:
+      "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=1200&q=85",
+    imageAlt: "A reader holding an open book",
     covers: [
       {
         title: "Project Hail Mary",
         author: "Andy Weir",
         category: "Science",
-        cover: "from-[#1a3a4a] via-[#102632] to-[#08151b]",
-        accent: "text-[#a8e0f2]",
       },
       {
         title: "Atomic Habits",
         author: "James Clear",
         category: "Others",
-        cover: "from-[#4a3520] via-[#2d2013] to-[#17100a]",
-        accent: "text-[#f0c78f]",
-        lift: "-translate-y-4",
       },
       {
         title: "The Silent Patient",
         author: "Alex Michaelides",
         category: "Fiction",
-        cover: "from-[#40202a] via-[#291319] to-[#150a0d]",
-        accent: "text-[#f0b7c6]",
       },
     ],
   },
@@ -142,38 +130,34 @@ function useHydrated() {
   );
 }
 
-function BookTrio({ covers }: { covers: Cover[] }) {
+function FeaturedBook({ slide }: { slide: Slide }) {
+  const featuredBook = slide.covers[0];
+
   return (
-    <div
-      aria-hidden="true"
-      className="relative mx-auto grid w-full max-w-sm grid-cols-3 gap-2.5 sm:gap-3"
-    >
-      {covers.map((book) => (
-        <div
-          key={book.title}
-          className={`relative aspect-2/3 overflow-hidden rounded-xl border border-white/10 bg-linear-to-br p-2.5 shadow-2xl shadow-black/40 transition-transform duration-500 hover:-translate-y-2 sm:rounded-2xl sm:p-3 ${book.cover} ${book.lift ?? ""}`}
-        >
-          <div className="absolute inset-y-0 left-0 w-1 bg-black/25" />
-          <div className="absolute inset-y-0 left-1 w-px bg-white/10" />
+    <div className="relative mx-auto aspect-[4/3] w-full max-w-xl overflow-hidden rounded-3xl border border-white/15 bg-white/5 shadow-2xl shadow-black/35">
+      <Image
+        src={slide.image}
+        alt={slide.imageAlt}
+        fill
+        sizes="(max-width: 1024px) 100vw, 45vw"
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/10 to-black/15" />
 
-          <div className="relative flex h-full flex-col justify-between pl-1.5">
-            <span className="text-[8px] font-medium tracking-[0.18em] text-white/50 uppercase">
-              {book.category}
-            </span>
+      <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md sm:top-5 sm:left-5">
+        <BookOpen className="size-3.5 text-[#e7cf9b]" />
+        A reader&apos;s corner
+      </div>
 
-            <div>
-              <p
-                className={`font-display text-xs leading-tight font-semibold sm:text-sm ${book.accent}`}
-              >
-                {book.title}
-              </p>
-              <p className="mt-1 text-[9px] text-white/50 sm:text-[10px]">
-                {book.author}
-              </p>
-            </div>
-          </div>
-        </div>
-      ))}
+      <div className="absolute right-4 bottom-4 left-4 rounded-2xl border border-white/20 bg-black/35 p-4 text-white backdrop-blur-xl sm:right-5 sm:bottom-5 sm:left-5 sm:p-5">
+        <p className="text-[10px] font-medium tracking-[0.2em] text-[#e7cf9b] uppercase">
+          Featured read · {featuredBook.category}
+        </p>
+        <p className="mt-2 font-display text-xl leading-tight font-semibold sm:text-2xl">
+          {featuredBook.title}
+        </p>
+        <p className="mt-1 text-sm text-white/65">{featuredBook.author}</p>
+      </div>
     </div>
   );
 }
@@ -181,16 +165,23 @@ function BookTrio({ covers }: { covers: Cover[] }) {
 function SlidePanel({ slide, index }: { slide: Slide; index: number }) {
   return (
     <div
-      className={`relative overflow-hidden bg-linear-to-br px-6 pt-12 pb-24 sm:px-10 lg:px-14 lg:pt-16 ${slide.theme}`}
+      className="relative isolate overflow-hidden bg-[#10120f] px-6 pt-12 pb-24 sm:px-10 lg:px-14 lg:pt-16"
     >
-      <div className="pointer-events-none absolute -top-24 -right-24 size-80 rounded-full bg-[#e2bf7a]/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -left-16 size-72 rounded-full bg-white/5 blur-3xl" />
+      <Image
+        src={libraryBackground}
+        alt=""
+        fill
+        sizes="100vw"
+        className="object-cover object-center"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-black/45" />
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-black/70 via-black/35 to-black/20" />
 
-      <span className="absolute top-6 right-6 text-[10px] tracking-[0.3em] text-white/35">
+      <span className="absolute top-6 right-6 z-10 text-[10px] tracking-[0.3em] text-white/55">
         0{index + 1} / 0{slides.length}
       </span>
 
-      <div className="relative grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <p className="flex items-center gap-2 text-[10px] font-medium tracking-[0.24em] text-[#e7cf9b] uppercase sm:text-xs">
             <Sparkles className="size-3.5" />
@@ -218,7 +209,7 @@ function SlidePanel({ slide, index }: { slide: Slide; index: number }) {
           <p className="mt-4 text-xs text-white/45">{slide.footnote}</p>
         </div>
 
-        <BookTrio covers={slide.covers} />
+        <FeaturedBook slide={slide} />
       </div>
     </div>
   );
