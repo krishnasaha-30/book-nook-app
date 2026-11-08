@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BookPlus, Library } from "lucide-react";
+import { BookRemovedToast } from "@/components/books/book-removed-toast";
 import { MyBookCard } from "@/components/books/my-book-card";
 import { BooksBrowserSkeleton } from "@/components/books/books-skeleton";
 import { PageHeader } from "@/components/page-header";
@@ -42,9 +43,12 @@ async function MyBooksContent({
 
   const denied = firstValue(params.denied) === "1";
   const updated = firstValue(params.updated) === "1";
+  const removed = firstValue(params.removed) === "1";
 
   return (
     <>
+      {removed ? <BookRemovedToast /> : null}
+
       {denied ? (
         <Alert variant="destructive" className="mb-6">
           <AlertDescription>

@@ -46,7 +46,7 @@ function readBookInput(formData: FormData): BookInput | string {
   }
 
   if (!isBookCategory(category)) {
-    return "Choose one of the available categories.";
+    return "Enter a category using no more than 60 characters.";
   }
 
   if (!Number.isInteger(totalCopies) || totalCopies < 1 || totalCopies > 999) {
@@ -148,7 +148,7 @@ export async function deleteBookAction(
   refreshBookViews();
   revalidatePath("/my-borrows");
 
-  return { message: "Book removed from your shelf." };
+  redirect("/my-books?removed=1");
 }
 
 export async function borrowBookAction(

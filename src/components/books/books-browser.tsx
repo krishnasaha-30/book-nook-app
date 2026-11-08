@@ -5,7 +5,11 @@ import { BookFilters } from "@/components/books/book-filters";
 import { BooksPagination } from "@/components/books/books-pagination";
 import { Button } from "@/components/ui/button";
 import { getBooks } from "@/lib/api";
-import { BOOKS_PAGE_SIZE, isBookCategory } from "@/lib/books";
+import {
+  BOOKS_PAGE_SIZE,
+  getBookCategories,
+  isBookCategory,
+} from "@/lib/books";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
@@ -26,7 +30,13 @@ export async function BooksBrowser({
   const sort = firstValue(params.sort) === "oldest" ? "oldest" : "newest";
   const requestedPage = Number(firstValue(params.page));
 
-  const books = await getBooks({ search, category, sort, limit: 100 });
+  const [books, allBooks] = await Promise.all([
+    getBooks({ search, category, sort, limit: 100 }),
+    getBooks({ limit: 100 }),
+  ]);
+  const categories = getBookCategories(
+    allBooks.map((book) => book.category),
+  );
 
   const totalPages = Math.max(1, Math.ceil(books.length / BOOKS_PAGE_SIZE));
   const page = Math.min(
@@ -45,6 +55,7 @@ export async function BooksBrowser({
       <BookFilters
         search={search}
         category={category}
+        categories={categories}
         sort={sort}
         total={books.length}
       />

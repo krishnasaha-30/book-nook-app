@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BOOK_CATEGORIES } from "@/lib/books";
 import { cn } from "@/lib/utils";
 
 type BookFiltersProps = {
   search: string;
   category: string;
+  categories: string[];
   sort: "newest" | "oldest";
   total: number;
 };
@@ -33,6 +33,7 @@ function buildHref({
 export function BookFilters({
   search,
   category,
+  categories,
   sort,
   total,
 }: BookFiltersProps) {
@@ -118,7 +119,7 @@ export function BookFilters({
           All books
         </Link>
 
-        {BOOK_CATEGORIES.map((option) => (
+        {categories.map((option) => (
           <Link
             key={option}
             href={buildHref({ ...filters, category: option })}

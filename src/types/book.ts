@@ -1,9 +1,4 @@
-export type BookCategory =
-  | "Fiction"
-  | "Science"
-  | "History"
-  | "Kids"
-  | "Others";
+export type BookCategory = string;
 
 export interface Book {
   _id: string;

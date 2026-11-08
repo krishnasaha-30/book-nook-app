@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { AddBookForm } from "@/components/books/add-book-form";
 import { PageHeader } from "@/components/page-header";
 import { Spinner } from "@/components/ui/spinner";
+import { getBookCategories } from "@/lib/api";
+import { getBookCategories as buildCategoryOptions } from "@/lib/books";
 import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = {
@@ -19,7 +21,9 @@ async function AddBookGate() {
     redirect("/login?redirect=/add-book");
   }
 
-  return <AddBookForm />;
+  const categories = buildCategoryOptions(await getBookCategories());
+
+  return <AddBookForm categories={categories} />;
 }
 
 function AddBookFallback() {

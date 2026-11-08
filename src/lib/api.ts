@@ -111,6 +111,10 @@ export async function getBooks(query: BookQuery = {}): Promise<Book[]> {
   }
 }
 
+export function getBookCategories(): Promise<string[]> {
+  return apiRequest<string[]>("/books/categories");
+}
+
 export async function getLatestBooks(limit = 6): Promise<Book[]> {
   return getBooks({ limit });
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, BookPlus, Loader2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -15,13 +15,18 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { createBookAction } from "@/lib/actions";
 import { initialActionState } from "@/lib/action-state";
-import { BOOK_CATEGORIES } from "@/lib/books";
+import { getBookCategories, MAX_BOOK_CATEGORY_LENGTH } from "@/lib/books";
 
-export function AddBookForm() {
+const ADD_NEW_CATEGORY = "__add_new_category__";
+
+export function AddBookForm({ categories }: { categories: string[] }) {
   const [state, formAction, isPending] = useActionState(
     createBookAction,
     initialActionState,
   );
+  const [selectedCategory, setSelectedCategory] = useState("Fiction");
+  const categoryOptions = getBookCategories(categories);
+
   return (
     <form action={formAction} className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -55,17 +60,38 @@ export function AddBookForm() {
               <Label htmlFor="category">Category</Label>
               <NativeSelect
                 id="category"
-                name="category"
-                defaultValue="Fiction"
+                name={
+                  selectedCategory === ADD_NEW_CATEGORY
+                    ? undefined
+                    : "category"
+                }
+                value={selectedCategory}
+                onChange={(event) =>
+                  setSelectedCategory(event.currentTarget.value)
+                }
                 required
                 className="h-11 w-full [&_select]:h-11"
               >
-                {BOOK_CATEGORIES.map((category) => (
+                {categoryOptions.map((category) => (
                   <NativeSelectOption key={category} value={category}>
                     {category}
                   </NativeSelectOption>
                 ))}
+                <NativeSelectOption value={ADD_NEW_CATEGORY}>
+                  Add a new category…
+                </NativeSelectOption>
               </NativeSelect>
+              {selectedCategory === ADD_NEW_CATEGORY ? (
+                <Input
+                  id="new-category"
+                  name="category"
+                  required
+                  maxLength={MAX_BOOK_CATEGORY_LENGTH}
+                  placeholder="Enter a new category"
+                  className="mt-2 h-11"
+                  autoFocus
+                />
+              ) : null}
             </div>
           </div>
 

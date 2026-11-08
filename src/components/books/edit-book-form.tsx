@@ -8,14 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookImageField } from "@/components/books/book-image-field";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { updateBookAction } from "@/lib/actions";
 import { initialActionState } from "@/lib/action-state";
-import { BOOK_CATEGORIES } from "@/lib/books";
+import { getBookCategories, MAX_BOOK_CATEGORY_LENGTH } from "@/lib/books";
 import type { Book } from "@/types/book";
 
 export function EditBookForm({ book }: { book: Book }) {
@@ -23,6 +19,8 @@ export function EditBookForm({ book }: { book: Book }) {
     updateBookAction.bind(null, book._id),
     initialActionState,
   );
+  const categoryOptions = getBookCategories([book.category]);
+
   return (
     <form action={formAction} className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -54,19 +52,20 @@ export function EditBookForm({ book }: { book: Book }) {
 
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <NativeSelect
+              <Input
                 id="category"
                 name="category"
                 defaultValue={book.category}
                 required
-                className="h-11 w-full [&_select]:h-11"
-              >
-                {BOOK_CATEGORIES.map((category) => (
-                  <NativeSelectOption key={category} value={category}>
-                    {category}
-                  </NativeSelectOption>
+                maxLength={MAX_BOOK_CATEGORY_LENGTH}
+                list="book-categories"
+                className="h-11"
+              />
+              <datalist id="book-categories">
+                {categoryOptions.map((category) => (
+                  <option key={category} value={category} />
                 ))}
-              </NativeSelect>
+              </datalist>
             </div>
           </div>
 
