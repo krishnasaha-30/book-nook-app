@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import { Binary } from "mongodb";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/mongodb";
 import { getCurrentUser } from "@/lib/session";
@@ -14,7 +15,7 @@ const allowedTypes = new Map([
 type ProfilePhotoDocument = {
   userId: string;
   contentType: string;
-  data: Buffer;
+  data: Buffer | Binary;
   updatedAt: Date;
 };
 
@@ -50,7 +51,10 @@ export async function GET() {
     return new NextResponse(null, { status: 404 });
   }
 
-  return new NextResponse(new Uint8Array(photo.data), {
+  const imageData =
+    photo.data instanceof Binary ? photo.data.value() : photo.data;
+
+  return new NextResponse(new Uint8Array(imageData), {
     headers: {
       "Content-Type": photo.contentType,
       "Cache-Control": "private, no-store",

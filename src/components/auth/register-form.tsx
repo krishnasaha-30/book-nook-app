@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { BookOpenCheck } from "lucide-react";
+import { BookOpenCheck, ImagePlus } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { GoogleIcon } from "@/components/auth/google-icon";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Field,
@@ -20,13 +21,20 @@ import { toast } from "@/components/ui/toast";
 import { validateRegister, type FieldErrors } from "@/lib/auth-validation";
 import { signIn, signUp } from "@/lib/auth-client";
 
+const MAX_PHOTO_SIZE = 4 * 1024 * 1024;
+const ALLOWED_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -37,14 +45,58 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
 
   const redirectTarget = searchParams.get("redirect") || "/";
 
+  useEffect(
+    () => () => {
+      if (photoPreview) {
+        URL.revokeObjectURL(photoPreview);
+      }
+    },
+    [photoPreview],
+  );
+
+  function handlePhotoChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+    setPhotoError(null);
+
+    if (
+      file &&
+      (!ALLOWED_PHOTO_TYPES.has(file.type) ||
+        file.size === 0 ||
+        file.size > MAX_PHOTO_SIZE)
+    ) {
+      setPhotoError("Choose a JPG, PNG, or WebP image smaller than 4 MB.");
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      event.target.value = "";
+      return;
+    }
+
+    setPhotoFile(file);
+    setPhotoPreview(file ? URL.createObjectURL(file) : null);
+  }
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
 
+    if (photoError) {
+      return;
+    }
+
+    if (
+      photoFile &&
+      (!ALLOWED_PHOTO_TYPES.has(photoFile.type) ||
+        photoFile.size === 0 ||
+        photoFile.size > MAX_PHOTO_SIZE)
+    ) {
+      setPhotoError("Choose a JPG, PNG, or WebP image smaller than 4 MB.");
+      return;
+    }
+
     const { data, errors } = validateRegister({
       name,
       email,
-      photoUrl,
+      photoUrl: photoFile ? "" : photoUrl,
       password,
     });
     const nextErrors: FieldErrors = { ...errors };
@@ -65,7 +117,7 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         name: data.name,
         email: data.email,
         password: data.password,
-        image: data.photoUrl || undefined,
+        image: photoFile ? undefined : data.photoUrl || undefined,
       });
 
       if (result.error) {
@@ -74,11 +126,49 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
         return;
       }
 
-      toast.add({
-        title: "Welcome to BookNook",
-        description: "Your shelf account is ready.",
-        type: "success",
-      });
+      let photoUploadError: string | null = null;
+
+      if (photoFile) {
+        try {
+          const formData = new FormData();
+          formData.set("name", data.name);
+          formData.set("photo", photoFile);
+
+          const response = await fetch("/api/profile/photo", {
+            method: "POST",
+            body: formData,
+          });
+          const uploadResult = (await response.json().catch(() => null)) as
+            | { error?: unknown }
+            | null;
+
+          if (!response.ok) {
+            photoUploadError =
+              typeof uploadResult?.error === "string"
+                ? uploadResult.error
+                : "Your account was created, but the photo could not be uploaded.";
+          }
+        } catch (error) {
+          photoUploadError =
+            error instanceof Error
+              ? `Your account was created, but the photo could not be uploaded: ${error.message}`
+              : "Your account was created, but the photo could not be uploaded.";
+        }
+      }
+
+      toast.add(
+        photoUploadError
+          ? {
+              title: "Account created",
+              description: photoUploadError,
+              type: "error",
+            }
+          : {
+              title: "Welcome to BookNook",
+              description: "Your shelf account is ready.",
+              type: "success",
+            },
+      );
 
       router.push(redirectTarget);
       router.refresh();
@@ -175,7 +265,11 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
             ) : null}
           </Field>
 
-          <Field data-invalid={fieldErrors.photoUrl ? "true" : undefined}>
+          <Field
+            data-invalid={
+              fieldErrors.photoUrl || photoError ? "true" : undefined
+            }
+          >
             <FieldLabel htmlFor="register-photo-url">Photo URL</FieldLabel>
             <Input
               id="register-photo-url"
@@ -190,6 +284,36 @@ export function RegisterForm({ googleEnabled }: { googleEnabled: boolean }) {
             {fieldErrors.photoUrl ? (
               <FieldError>{fieldErrors.photoUrl}</FieldError>
             ) : null}
+            <p className="text-xs text-muted-foreground">
+              Or choose a photo from your device (JPG, PNG, or WebP, up to 4
+              MB). The uploaded photo takes precedence over this URL.
+            </p>
+            <Input
+              ref={photoInputRef}
+              id="register-photo-file"
+              name="photo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handlePhotoChange}
+              aria-invalid={Boolean(photoError)}
+            />
+            {photoFile ? (
+              <div className="flex items-center gap-3">
+                <Avatar size="lg" className="size-12">
+                  <AvatarImage
+                    src={photoPreview ?? undefined}
+                    alt="Photo preview"
+                  />
+                  <AvatarFallback>
+                    <ImagePlus className="size-5" />
+                  </AvatarFallback>
+                </Avatar>
+                <p className="min-w-0 truncate text-xs text-muted-foreground">
+                  Selected: {photoFile.name}
+                </p>
+              </div>
+            ) : null}
+            {photoError ? <FieldError>{photoError}</FieldError> : null}
           </Field>
 
           <Field data-invalid={fieldErrors.password ? "true" : undefined}>
