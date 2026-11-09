@@ -114,7 +114,7 @@ export function BookImageField({
         ) : (
           <Upload className="size-4" />
         )}
-        {isUploading ? "Uploading cover…" : "Upload a cover to ImgBB"}
+        {isUploading ? "Uploading cover…" : "Upload a cover image"}
       </Button>
 
       <div className="relative aspect-2/3 overflow-hidden rounded-2xl border border-border/70 bg-muted/40">
