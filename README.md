@@ -1,10 +1,11 @@
 # BookNook
 
-BookNook is a community-powered online library. Readers can share books they
-own, borrow available copies for seven days, and return them for other readers
-to enjoy.
+I built BookNook as a community-powered online library where readers can share
+books, discover their next read, and borrow available titles from one another.
+Borrowed books can be returned after seven days so they are available to the
+next reader.
 
-**Live site:** [book-nook-app-two.vercel.app](https://book-nook-app-two.vercel.app)
+**Live client:** [https://book-nook-app-two.vercel.app](https://book-nook-app-two.vercel.app)
 
 ## Features
 
